@@ -3,8 +3,25 @@ import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
 import * as serviceWorkerRegistration from './serviceWorkerRegistration';
-import reportWebVitals from './reportWebVitals';
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
 
+// Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyBT2miWlhm5ZoutTReyE23xKn7gawqo9rQ",
+  authDomain: "taskmate-52120.firebaseapp.com",
+  projectId: "taskmate-52120",
+  storageBucket: "taskmate-52120.appspot.com",
+  messagingSenderId: "1045496763944",
+  appId: "1:1045496763944:web:705b3fe672581cd479471d",
+  measurementId: "G-3B4HZVVL0Q"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
@@ -12,12 +29,7 @@ root.render(
   </React.StrictMode>
 );
 
-// If you want your app to work offline and load faster, you can change
-// unregister() to register() below. Note this comes with some pitfalls.
+// unregister() or register()
 // Learn more about service workers: https://cra.link/PWA
-serviceWorkerRegistration.unregister();
+serviceWorkerRegistration.register();
 
-// If you want to start measuring performance in your app, pass a function
-// to log results (for example: reportWebVitals(console.log))
-// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
-reportWebVitals();

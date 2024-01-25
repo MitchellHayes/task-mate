@@ -1,0 +1,14 @@
+.todo-header {
+    justify-content: center;
+    align-items: center;
+    font-size: 3rem;
+    font-weight: bolder;
+}
+
+.list-group-item {
+    justify-content: 'space-between';
+}
+
+.delete-button {
+    margin-right: "10px";
+}
