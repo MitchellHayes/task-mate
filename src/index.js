@@ -31,5 +31,5 @@ root.render(
 
 // unregister() or register()
 // Learn more about service workers: https://cra.link/PWA
-serviceWorkerRegistration.register();
+serviceWorkerRegistration.unregister();
 

@@ -1,5 +1,15 @@
 import React, { Component } from "react";
-import { Button, IconButton, List, ListItem, ListItemIcon, ListItemText, TextField, Grid, Box, Input } from "@mui/material";
+import {
+  Button,
+  IconButton,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
+  TextField,
+  Grid,
+  Box,
+} from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 
@@ -85,32 +95,47 @@ class Todo extends Component {
 
   render() {
     return (
-      <Box sx={{ width: "100%", maxWidth: 400, margin: "auto" }}>
-        <Box sx={{ my: 4, textAlign: "center", fontSize: "3rem", fontWeight: "bolder" }}>
+      <Box
+        sx={{
+          px: "16px",
+          display: "flex",
+          flexWrap: "wrap",
+          justifyContent: "center",
+        }}
+      >
+        <Box
+          sx={{ fontSize: "1.875em", color: "#121e26", fontWeight: "bolder" }}
+        >
           Todo List
         </Box>
-        <Grid container spacing={2} justifyContent="center">
-          <Grid item xs={12}>
-            <Box display="flex" alignItems="center">
-              <TextField 
-                id="outlined-basic" 
-                label="add an item..." 
-                variant="outlined" 
-                value={this.state.userInput}
-                onChange={(e) => this.updateInput(e.target.value)}
-                inputProps={{ 'aria-label': 'add something' }}
-                />
-              <Button variant="contained" size="small" onClick={() => this.addItem()} sx={{ ml: 2 }}>
-                ADD
-              </Button>
-            </Box>
+        <Grid container spacing={1} sx={{ justifyContent: "center" }}>
+          <Grid item xs={8}>
+            <TextField
+              fullWidth
+              id="outlined-basic"
+              label="add an item..."
+              variant="outlined"
+              value={this.state.userInput}
+              onChange={(e) => this.updateInput(e.target.value)}
+              inputProps={{ "aria-label": "add something" }}
+              display="flex"
+            />
+          </Grid>
+          <Grid item xs="auto">
+            <Button variant="contained" onClick={() => this.addItem()}>
+              ADD
+            </Button>
           </Grid>
         </Grid>
-        <List sx={{ width: "100%", bgcolor: "background.paper" }}>
+        <List sx={{ width: "80%" }}>
           {this.state.list.map((item, index) => (
             <ListItem key={index} disablePadding>
               <ListItemIcon>
-                <IconButton edge="start" aria-label="delete" onClick={() => this.deleteItem(item.id)}>
+                <IconButton
+                  edge="start"
+                  aria-label="delete"
+                  onClick={() => this.deleteItem(item.id)}
+                >
                   <DeleteIcon />
                 </IconButton>
               </ListItemIcon>
@@ -126,7 +151,11 @@ class Todo extends Component {
               ) : (
                 <ListItemText primary={item.value} />
               )}
-              <IconButton edge="end" aria-label="edit" onClick={() => this.startEditing(index)}>
+              <IconButton
+                edge="end"
+                aria-label="edit"
+                onClick={() => this.startEditing(index)}
+              >
                 <EditIcon />
               </IconButton>
             </ListItem>

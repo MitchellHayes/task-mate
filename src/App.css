@@ -12,12 +12,13 @@
 }
 
 .App-header {
-  background-color: #282c34;
+  background-color: #283635;
   text-align: left;
   justify-content: top;
   font-size: 16px;
-  color: white;
+  color: #f4efeb;
   grid-area: header;
+  padding-left: 16px;
 }
 
 .Todo {
