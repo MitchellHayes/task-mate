@@ -1,0 +1,10 @@
+:root {
+    --main-font: "Roboto";
+    --white-font-color: #fff;
+    --black-font-color: #121e26;
+    --main-background-color: #f4efeb;
+    --card-background-color: #283635;
+    --font-large: 18px;
+    --font-medium: 16px;
+    --font-small: 14px;
+}

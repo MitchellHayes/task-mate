@@ -1,11 +1,18 @@
 import React, { Component } from "react";
+import "./todo.css";
+import { v4 as uuidv4 } from "uuid";
 import {
   Button,
+  Checkbox,
   IconButton,
   List,
   ListItem,
+  ListItemButton,
   ListItemIcon,
   ListItemText,
+  Collapse,
+  ExpandLess,
+  ExpandMore,
   TextField,
   Grid,
   Box,
@@ -31,21 +38,28 @@ class Todo extends Component {
   }
 
   // Add item if user input in not empty
-  addItem() {
+  addTask(parentId = null) {
     if (this.state.userInput !== "") {
       const userInput = {
-        // Add a random id which is used to delete
-        id: Math.random(),
-
-        // Add a user value to list
+        id: uuidv4(),
         value: this.state.userInput,
+        parentId: parentId,
+        children: [],
+        status: "active", // will change to complete when done
       };
 
       // Update list
       const list = [...this.state.list];
-      list.push(userInput);
 
-      // reset state
+      if (parentId === null) {
+        list.push(userInput);
+      } else {
+        const parentIndex = list.findIndex((item) => item.id === parentId);
+        if (parentIndex !== -1) {
+          list[parentIndex].children.push(userInput);
+        }
+      }
+
       this.setState({
         list,
         userInput: "",
@@ -53,25 +67,82 @@ class Todo extends Component {
     }
   }
 
-  // Function to delete item from list use id to delete
-  deleteItem(key) {
-    const list = [...this.state.list];
+  // Allows closing of tasks to include closing parent when all children are closed
+  closeTask(taskId) {
+    this.setState((prevState) => {
+      let list = prevState.list.map((item) => {
+        if (item.id === taskId || item.parentId === taskId) {
+          return { ...item, status: "completed" };
+        }
+        return item;
+      });
 
-    // Filter values and leave value which we need to delete
-    const updateList = list.filter((item) => item.id !== key);
+      list.forEach((item, index) => {
+        if (item.parentId) {
+          const parentIndex = list.findIndex(
+            (parent) => parent.id === item.parentId
+          );
+          if (
+            parentIndex !== -1 &&
+            list.every(
+              (child) =>
+                child.parentId !== item.parentId || child.status === "completed"
+            )
+          ) {
+            list[parentIndex] = { ...list[parentIndex], status: "completed" };
+          }
+        }
+      });
 
-    // Update list in state
-    this.setState({
-      list: updateList,
+      return { list };
+    });
+  }
+
+  // Allows deleting of tasks to include deleting parent when all children are deleted
+  deleteTask(taskId) {
+    this.setState((prevState) => {
+      let list = prevState.list.map((item) => {
+        if (item.id === taskId || item.parentId === taskId) {
+          return { ...item, status: "deleted" };
+        }
+        return item;
+      });
+
+      list.forEach((item, index) => {
+        if (item.parentId) {
+          const parentIndex = list.findIndex(
+            (parent) => parent.id === item.parentId
+          );
+          if (
+            parentIndex !== -1 &&
+            list.every(
+              (child) =>
+                child.parentId !== item.parentId ||
+                child.status === "deleted" ||
+                child.status === "completed"
+            )
+          ) {
+            list[parentIndex] = { ...list[parentIndex], status: "deleted" };
+          }
+        }
+      });
+
+      return { list };
     });
   }
 
   // Start editing an item
-  startEditing = (index) => {
-    this.setState({
-      editingIndex: index,
-      editingText: this.state.list[index].value,
-    });
+  startEditing = (taskId) => {
+    const { list } = this.state;
+    const taskIndex = list.findIndex((item) => item.id === taskId);
+
+    if (taskIndex !== -1) {
+      this.setState({
+        editingIndex: taskIndex,
+        editingText: list[taskIndex].value,
+        isEditingChild: list[taskIndex].parentId !== null,
+      });
+    }
   };
 
   // Update the editing text
@@ -84,83 +155,87 @@ class Todo extends Component {
     const { editingIndex, editingText, list } = this.state;
     if (editingText.trim() !== "") {
       let updatedList = [...list];
-      updatedList[editingIndex].value = editingText;
+      updatedList[editingIndex] = {
+        ...updatedList[editingIndex],
+        value: editingText,
+      };
       this.setState({
         list: updatedList,
         editingIndex: null,
         editingText: "",
+        isEditingChild: false,
       });
     }
   };
 
   render() {
     return (
-      <Box
-        sx={{
-          px: "16px",
-          display: "flex",
-          flexWrap: "wrap",
-          justifyContent: "center",
-        }}
-      >
-        <Box
-          sx={{ fontSize: "1.875em", color: "#121e26", fontWeight: "bolder" }}
-        >
-          Todo List
-        </Box>
+      <Box className="todo-card">
+        <h2>To Do List</h2>
         <Grid container spacing={1} sx={{ justifyContent: "center" }}>
           <Grid item xs={8}>
             <TextField
               fullWidth
-              id="outlined-basic"
-              label="add an item..."
-              variant="outlined"
+              label="add an item"
               value={this.state.userInput}
               onChange={(e) => this.updateInput(e.target.value)}
-              inputProps={{ "aria-label": "add something" }}
-              display="flex"
+              inputProps={{ "aria-label": "add an item" }}
             />
           </Grid>
-          <Grid item xs="auto">
-            <Button variant="contained" onClick={() => this.addItem()}>
+          <Grid item xs="auto" sx={{ display: "flex", alignItems: "center" }}>
+            <Button variant="contained" onClick={() => this.addTask()}>
               ADD
             </Button>
           </Grid>
+          <Grid item xs={8}>
+            <List>
+              {this.state.list
+                .filter((task) => task.status !== "deleted")
+                .map((task, index) => (
+                  <ListItem key={index} disablePadding>
+                    <ListItemButton>
+                      <ListItemIcon>
+                        <Checkbox
+                          edge="start"
+                          aria-label="action task"
+                          onClick={() => this.closeTask(task.id)}
+                        />
+                      </ListItemIcon>
+                      {this.state.list[this.state.editingIndex]?.id ===
+                      task.id ? (
+                        <TextField
+                          fullWidth
+                          value={this.state.editingText}
+                          onChange={(e) =>
+                            this.updateEditingText(e.target.value)
+                          }
+                          onBlur={this.saveEdit}
+                          autoFocus
+                        />
+                      ) : (
+                        <ListItemText primary={task.value} />
+                      )}
+
+                      <IconButton
+                        edge="end"
+                        aria-label="edit"
+                        onClick={() => this.startEditing(task.id)}
+                      >
+                        <EditIcon />
+                      </IconButton>
+                      <IconButton
+                        edge="end"
+                        aria-label="delete"
+                        onClick={() => this.deleteTask(task.id)}
+                      >
+                        <DeleteIcon />
+                      </IconButton>
+                    </ListItemButton>
+                  </ListItem>
+                ))}
+            </List>
+          </Grid>
         </Grid>
-        <List sx={{ width: "80%" }}>
-          {this.state.list.map((item, index) => (
-            <ListItem key={index} disablePadding>
-              <ListItemIcon>
-                <IconButton
-                  edge="start"
-                  aria-label="delete"
-                  onClick={() => this.deleteItem(item.id)}
-                >
-                  <DeleteIcon />
-                </IconButton>
-              </ListItemIcon>
-              {this.state.editingIndex === index ? (
-                <TextField
-                  fullWidth
-                  variant="outlined"
-                  value={this.state.editingText}
-                  onChange={(e) => this.updateEditingText(e.target.value)}
-                  onBlur={this.saveEdit}
-                  autoFocus
-                />
-              ) : (
-                <ListItemText primary={item.value} />
-              )}
-              <IconButton
-                edge="end"
-                aria-label="edit"
-                onClick={() => this.startEditing(index)}
-              >
-                <EditIcon />
-              </IconButton>
-            </ListItem>
-          ))}
-        </List>
       </Box>
     );
   }

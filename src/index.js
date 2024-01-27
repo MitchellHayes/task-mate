@@ -1,10 +1,14 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
+import './variables.css'
+import "@fontsource/roboto"; 
 import App from './App';
 import * as serviceWorkerRegistration from './serviceWorkerRegistration';
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
+
+
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
