@@ -1,13 +1,12 @@
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import './index.css';
-import './variables.css'
-import "@fontsource/roboto"; 
-import App from './App';
-import * as serviceWorkerRegistration from './serviceWorkerRegistration';
+import React from "react";
+import ReactDOM from "react-dom/client";
+import "./index.css";
+import "./variables.css";
+import "@fontsource/roboto";
+import App from "./App";
+import * as serviceWorkerRegistration from "./serviceWorkerRegistration";
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
-
 
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
@@ -20,13 +19,13 @@ const firebaseConfig = {
   storageBucket: "taskmate-52120.appspot.com",
   messagingSenderId: "1045496763944",
   appId: "1:1045496763944:web:705b3fe672581cd479471d",
-  measurementId: "G-3B4HZVVL0Q"
+  measurementId: "G-3B4HZVVL0Q",
 };
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const analytics = getAnalytics(app);
-const root = ReactDOM.createRoot(document.getElementById('root'));
+const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
   <React.StrictMode>
     <App />
@@ -36,4 +35,3 @@ root.render(
 // unregister() or register()
 // Learn more about service workers: https://cra.link/PWA
 serviceWorkerRegistration.unregister();
-

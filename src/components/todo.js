@@ -13,7 +13,9 @@ import {
   TextField,
   Grid,
   Box,
+  ToggleButton,
 } from "@mui/material";
+import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 
@@ -23,43 +25,70 @@ class Todo extends Component {
 
     this.state = {
       userInput: "",
+      childTaskInput: "",
       list: [],
-      editingIndex: null,
       editingText: "",
-      addingChildOf: null, // New state variable
+      addingChildOf: null,
+      editingId: null,
+      isEditingChild: false,
+      filterStatus: "active",
     };
   }
+
+  componentDidUpdate() {
+    const { list } = this.state;
+    localStorage.setItem("todoList", JSON.stringify(list));
+  }
+
+  componentDidMount() {
+    const savedList = localStorage.getItem("todoList");
+    if (savedList) {
+      this.setState({ list: JSON.parse(savedList) });
+    }
+  }
+
   // Set a user input value
   updateInput(value) {
     this.setState({ userInput: value });
   }
 
+  updateChildInput(value) {
+    this.setState({ childTaskInput: value });
+  }
+
+  // Handle toggle button state
+  handleFilterChange = (event, newAlignment) => {
+    if (newAlignment !== null) {
+      this.setState({ filterStatus: newAlignment });
+    }
+  };
+
   // Add item if user input in not empty
   addTask(parentId = null) {
-    if (this.state.userInput !== "") {
-      const userInput = {
+    const input = parentId ? this.state.childTaskInput : this.state.userInput;
+    if (input !== "") {
+      const newTask = {
         id: uuidv4(),
-        value: this.state.userInput,
-        parentId: parentId,
+        value: input,
+        parentId,
         children: [],
-        status: "active", // will change to complete when done
+        status: "active",
       };
 
-      // Update list
-      const list = [...this.state.list];
+      this.setState((prevState) => {
+        const newList = parentId
+          ? prevState.list.map((item) =>
+              item.id === parentId
+                ? { ...item, children: [...item.children, newTask] }
+                : item
+            )
+          : [...prevState.list, newTask];
 
-      if (parentId === null) {
-        list.push(userInput);
-      } else {
-        const parentIndex = list.findIndex((item) => item.id === parentId);
-        if (parentIndex !== -1) {
-          list[parentIndex].children.push(userInput);
-        }
-      }
-
-      this.setState({
-        list,
-        userInput: "",
+        return {
+          list: newList,
+          userInput: parentId ? prevState.userInput : "",
+          childTaskInput: parentId ? "" : prevState.childTaskInput,
+        };
       });
     }
   }
@@ -159,31 +188,21 @@ class Todo extends Component {
   // Start editing an item
   startEditing = (taskId, isChild = false, parentId = null) => {
     const { list } = this.state;
-    let taskIndex = -1;
+    let taskToEdit;
 
     if (isChild) {
-      const parentIndex = list.findIndex((item) => item.id === parentId);
-      if (parentIndex !== -1) {
-        taskIndex = list[parentIndex].children.findIndex(
-          (item) => item.id === taskId
-        );
-        if (taskIndex !== -1) {
-          this.setState({
-            editingIndex: taskIndex,
-            editingText: list[parentIndex].children[taskIndex].value,
-            isEditingChild: true,
-          });
-        }
-      }
+      const parentTask = list.find((item) => item.id === parentId);
+      taskToEdit = parentTask.children.find((child) => child.id === taskId);
     } else {
-      taskIndex = list.findIndex((item) => item.id === taskId);
-      if (taskIndex !== -1) {
-        this.setState({
-          editingIndex: taskIndex,
-          editingText: list[taskIndex].value,
-          isEditingChild: false,
-        });
-      }
+      taskToEdit = list.find((item) => item.id === taskId);
+    }
+
+    if (taskToEdit) {
+      this.setState({
+        editingId: taskId,
+        editingText: taskToEdit.value,
+        isEditingChild: isChild,
+      });
     }
   };
 
@@ -194,16 +213,31 @@ class Todo extends Component {
 
   // Save the edited item
   saveEdit = () => {
-    const { editingIndex, editingText, list } = this.state;
+    const { editingId, editingText, list, isEditingChild } = this.state;
     if (editingText.trim() !== "") {
-      let updatedList = [...list];
-      updatedList[editingIndex] = {
-        ...updatedList[editingIndex],
-        value: editingText,
-      };
+      let updatedList = list.map((item) => {
+        if (isEditingChild) {
+          if (item.children.some((child) => child.id === editingId)) {
+            return {
+              ...item,
+              children: item.children.map((child) =>
+                child.id === editingId
+                  ? { ...child, value: editingText }
+                  : child
+              ),
+            };
+          }
+        } else {
+          if (item.id === editingId) {
+            return { ...item, value: editingText };
+          }
+        }
+        return item;
+      });
+
       this.setState({
         list: updatedList,
-        editingIndex: null,
+        editingId: null,
         editingText: "",
         isEditingChild: false,
       });
@@ -211,6 +245,12 @@ class Todo extends Component {
   };
 
   render() {
+    const filteredTasks = this.state.list.filter(
+      (task) =>
+        task.status !== "deleted" &&
+        task.parentId === null &&
+        task.status === this.state.filterStatus
+    );
     return (
       <Box className="todo-card">
         <h2>To Do List</h2>
@@ -230,12 +270,18 @@ class Todo extends Component {
             </Button>
           </Grid>
           <Grid item xs={8}>
-            <List>
-              {this.state.list
-                .filter(
-                  (task) => task.status !== "deleted" && task.parentId === null
-                )
-                .map((parentTask) => (
+            <ToggleButtonGroup
+              color="primary"
+              value={this.state.filterStatus}
+              variant="soft"
+              exclusive
+              onChange={this.handleFilterChange}
+            >
+              <ToggleButton value="active">Active</ToggleButton>
+              <ToggleButton value="completed">Completed</ToggleButton>
+            </ToggleButtonGroup>
+            <List className="todo-list-container">
+                {filteredTasks.map((parentTask) => (
                   <React.Fragment key={parentTask.id}>
                     <ListItem disablePadding>
                       <ListItemButton>
@@ -247,8 +293,8 @@ class Todo extends Component {
                             onChange={() => this.closeTask(parentTask.id)}
                           />
                         </ListItemIcon>
-                        {this.state.list[this.state.editingIndex]?.id ===
-                        parentTask.id ? (
+                        {this.state.editingId === parentTask.id &&
+                        !this.state.isEditingChild ? (
                           <TextField
                             fullWidth
                             value={this.state.editingText}
@@ -261,13 +307,15 @@ class Todo extends Component {
                         ) : (
                           <ListItemText primary={parentTask.value} />
                         )}
-                        <IconButton
-                          edge="end"
-                          aria-label="edit"
-                          onClick={() => this.startEditing(parentTask.id)}
-                        >
-                          <EditIcon />
-                        </IconButton>
+                        {this.state.filterStatus !== "completed" && (
+                          <IconButton
+                            edge="end"
+                            aria-label="edit"
+                            onClick={() => this.startEditing(parentTask.id)}
+                          >
+                            <EditIcon />
+                          </IconButton>
+                        )}
                         <IconButton
                           edge="end"
                           aria-label="delete"
@@ -276,18 +324,20 @@ class Todo extends Component {
                           <DeleteIcon />
                         </IconButton>
                       </ListItemButton>
-                      <Button
-                        variant="outlined"
-                        size="small"
-                        onClick={() =>
-                          this.setState({
-                            addingChildOf: parentTask.id,
-                            userInput: "",
-                          })
-                        }
-                      >
-                        Add Child Task
-                      </Button>
+                      {this.state.filterStatus !== "completed" && (
+                        <Button
+                          variant="outlined"
+                          size="small"
+                          onClick={() =>
+                            this.setState({
+                              addingChildOf: parentTask.id,
+                              userInput: "",
+                            })
+                          }
+                        >
+                          Add Child Task
+                        </Button>
+                      )}
                     </ListItem>
                     {parentTask.children && (
                       <List component="div" disablePadding>
@@ -310,7 +360,8 @@ class Todo extends Component {
                                     }
                                   />
                                 </ListItemIcon>
-                                {this.state.editingIndex === childTask.id ? (
+                                {this.state.editingId === childTask.id &&
+                                this.state.isEditingChild ? (
                                   <TextField
                                     fullWidth
                                     value={this.state.editingText}
@@ -323,19 +374,21 @@ class Todo extends Component {
                                 ) : (
                                   <ListItemText primary={childTask.value} />
                                 )}
-                                <IconButton
-                                  edge="end"
-                                  aria-label="edit"
-                                  onClick={() =>
-                                    this.startEditing(
-                                      childTask.id,
-                                      true,
-                                      parentTask.id
-                                    )
-                                  }
-                                >
-                                  <EditIcon />
-                                </IconButton>
+                                {this.state.filterStatus !== "completed" && (
+                                  <IconButton
+                                    edge="end"
+                                    aria-label="edit"
+                                    onClick={() =>
+                                      this.startEditing(
+                                        childTask.id,
+                                        true,
+                                        parentTask.id
+                                      )
+                                    }
+                                  >
+                                    <EditIcon />
+                                  </IconButton>
+                                )}
                                 <IconButton
                                   edge="end"
                                   aria-label="delete"
@@ -357,14 +410,13 @@ class Todo extends Component {
                             <TextField
                               fullWidth
                               label="Add child task"
-                              value={this.state.userInput}
-                              onChange={(e) => this.updateInput(e.target.value)}
+                              value={this.state.childTaskInput}
+                              onChange={(e) =>
+                                this.updateChildInput(e.target.value)
+                              }
                               onBlur={() => {
                                 this.addTask(parentTask.id);
-                                this.setState({
-                                  addingChildOf: null,
-                                  userInput: "",
-                                });
+                                this.setState({ addingChildOf: null });
                               }}
                               autoFocus
                             />
@@ -375,6 +427,7 @@ class Todo extends Component {
                   </React.Fragment>
                 ))}
             </List>
+            
           </Grid>
         </Grid>
       </Box>

@@ -1,4 +1,4 @@
-.todo-card {
+.eventList-card {
   font-size: var(--font-large);
   color: var(--black-font-color);
   font-weight: bolder;
@@ -10,17 +10,9 @@
   box-sizing: border-box;
 }
 
-.todo-list-container {
+.event-list-container {
   width: 100%;
   overflow-y: auto;
   max-height: 65vh;
   margin-top: 16px;
-}
-
-.list-group-item {
-  justify-content: "space-between";
-}
-
-.delete-button {
-  margin-right: "10px";
 }

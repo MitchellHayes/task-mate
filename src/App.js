@@ -1,5 +1,6 @@
 import React from "react";
 import Todo from "./components/todo";
+import EventList from "./components/eventList"
 import "./App.css";
 
 function App() {
@@ -8,6 +9,9 @@ function App() {
       <header className="app-header">
         <h1>Task Mate</h1>
       </header>
+      <div className="EventList">
+        <EventList />
+      </div>
       <div className="Todo">
         <Todo />
       </div>
